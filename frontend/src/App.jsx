@@ -122,61 +122,90 @@ export default function App() {
 
     // -------------------------------- Weather --------------------------------
 
-    const [weatherDetails, setWeatherDetails] = useState("");
+    import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-    const [place, setPlace] = useState(" ");
+function WeatherApp() {
+    const [weatherDetails, setWeatherDetails] = useState({});
+    const [cities, setCities] = useState([]);
+    const [selectedCityIndex, setSelectedCityIndex] = useState(0);
 
-    let weather = {
-        apiKey: "0bff6234f35d3b5aef48e0dd8d8d27b9",
-        fetchWeather: function (city) {
-            fetch(
-                "https://api.openweathermap.org/data/2.5/weather?q=" +
-                city +
-                "&units=metric&appid=" +
-                this.apiKey
-            )
-                .then((response) => {
-                    if (!response.ok) {
-                        alert("No weather found.");
-                        throw new Error("No weather found.");
-                    }
-                    return response.json();
-                })
-                .then((data) => {
-                    this.displayWeather(data)
-                })
-                .catch((err) => {
-                    console.log(err);
-                });
-        },
-        displayWeather: function (data) {
-            const { name } = data;
-            const { icon, description } = data.weather[0];
-            const { temp, humidity } = data.main;
-            const { speed } = data.wind;
-            setWeatherDetails(() => ({
-                city: name,
-                temp: temp + "°C",
-                icon: "https://openweathermap.org/img/wn/" + icon + ".png",
-                description: description,
-                humidity: humidity + "%",
-                wind: speed + " km/h",
-            }))
-        },
-        search: function () {
-            this.fetchWeather(place);
-        },
+    const weatherApiKey = "0bff6234f35d3b5aef48e0dd8d8d27b9";
+
+    const fetchWeather = (city) => {
+        fetch(
+            `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${weatherApiKey}`
+        )
+            .then((response) => {
+                if (!response.ok) {
+                    alert("No weather found.");
+                    throw new Error("No weather found.");
+                }
+                return response.json();
+            })
+            .then((data) => {
+                displayWeather(data);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+    };
+
+    const displayWeather = (data) => {
+        const { name } = data;
+        const { icon, description } = data.weather[0];
+        const { temp, humidity } = data.main;
+        const { speed } = data.wind;
+
+        setWeatherDetails({
+            city: name,
+            temp: temp + "°C",
+            icon: "https://openweathermap.org/img/wn/" + icon + ".png",
+            description: description,
+            humidity: humidity + "%",
+            wind: speed + " km/h",
+        });
+    };
+
+    const handleCityChange = (event) => {
+        setSelectedCityIndex(event.target.value);
+        fetchWeather(cities[event.target.value]);
     };
 
     useEffect(() => {
-        axios.get("https://ipapi.co/json")
+        axios
+            .get("https://ipapi.co/json")
             .then((response) => {
-                setPlace(response.data.city)
-                weather.fetchWeather(response.data.city);
+                const defaultCity = response.data.city;
+                setCities([defaultCity]);
+                fetchWeather(defaultCity);
             })
             .catch((error) => console.log(error));
+    }, []);
 
-    }, [])
+    return (
+        <div>
+            <select onChange={handleCityChange} value={selectedCityIndex}>
+                {cities.map((city, index) => (
+                    <option key={index} value={index}>
+                        {city}
+                    </option>
+                ))}
+            </select>
+            <div>
+                <h1>Weather in {weatherDetails.city}</h1>
+                <p>Temperature: {weatherDetails.temp}</p>
+                <img src={weatherDetails.icon} alt={weatherDetails.description} />
+                <p>Description: {weatherDetails.description}</p>
+                <p>Humidity: {weatherDetails.humidity}</p>
+                <p>Wind Speed: {weatherDetails.wind}</p>
+            </div>
+        </div>
+    );
+}
+
+export default WeatherApp;
+
 
     //-------------------------------- Translate --------------------------------
 
